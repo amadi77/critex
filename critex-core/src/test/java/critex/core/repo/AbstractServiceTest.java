@@ -41,7 +41,7 @@ public class AbstractServiceTest {
             super(repository);
         }
 
-        public ReportCondition generateReport(FilterBase filterBase) {
+        public ReportCondition generateReport(Object filterBase) {
             return new ReportCondition();
         }
     }

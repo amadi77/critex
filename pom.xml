@@ -18,7 +18,7 @@
     <description>critex library parent</description>
 
     <modules>
-        <module>core</module>
+        <module>critex-core</module>
         <module>test-module</module>
     </modules>
 

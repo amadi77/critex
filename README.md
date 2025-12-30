@@ -6,12 +6,12 @@ Critex is a powerful Java library designed to simplify the generation of dynamic
 
 The project is organized as a multi-module Maven project:
 
-- **`core`**: Contains the main library logic, including specification generators and abstract service implementations.
-- **`test-module`**: A sample Spring Boot application demonstrating how to integrate and use the `core` library with entities like `User`, `Post`, and `Comment`.
+- **`critex-core`**: Contains the main library logic, including specification generators and abstract service implementations.
+- **`test-module`**: A sample Spring Boot application demonstrating how to integrate and use the `critex-core` library with entities like `User`, `Post`, and `Comment`.
 
-## Core Module Features
+## critex-core Module Features
 
-The `core` module provides a set of tools to transform DTOs or filter objects into JPA Specifications automatically.
+The `critex-core` module provides a set of tools to transform DTOs or filter objects into JPA Specifications automatically.
 
 ### Logic Behind the Library
 
@@ -116,7 +116,7 @@ To use Critex in your own Spring Boot project:
 
 1.  **Install to Local Maven Repository**:
     ```bash
-    mvn clean install -pl core
+    mvn clean install -pl critex-core
     ```
 
 2.  **Add Dependency**:
