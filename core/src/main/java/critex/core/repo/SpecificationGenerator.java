@@ -6,9 +6,9 @@ import org.springframework.data.jpa.domain.Specification;
 
 import java.util.*;
 
-public interface SpecificationGenerator<T> {
+public abstract class SpecificationGenerator<T> extends Parameterized<T> {
 
-    default Collection<JoinReport> toJoin(Collection<String> joins) {
+    protected Collection<JoinReport> toJoin(Collection<String> joins) {
         if (joins == null || joins.isEmpty()) return Collections.emptyList();
         Map<String, JoinReport> joinsReport = new HashMap<>();
         for (String eachJoin : joins) {
@@ -24,7 +24,7 @@ public interface SpecificationGenerator<T> {
         return joinsReport.values();
     }
 
-    private static JoinReport checkDuplicateJoin(Map<String, JoinReport> joinsReport, String key, JoinReport joinReport) {
+    protected static JoinReport checkDuplicateJoin(Map<String, JoinReport> joinsReport, String key, JoinReport joinReport) {
         if (joinsReport.containsKey(key)) {
             joinReport = joinsReport.get(key);
         } else {
@@ -33,21 +33,21 @@ public interface SpecificationGenerator<T> {
         return joinReport;
     }
 
-    default Specification<T> getById(Object id, Collection<JoinReport> joins) {
+    protected Specification<T> getById(Object id, Collection<JoinReport> joins) {
         ReportCondition condition = new ReportCondition();
         condition.addEqual("id", id);
         joins.forEach(condition::addJoinReport);
         return toPredicate(condition);
     }
 
-    default Specification<T> getAllByIds(List<Object> ids, Collection<JoinReport> joins) {
+    protected Specification<T> getAllByIds(List<Object> ids, Collection<JoinReport> joins) {
         ReportCondition condition = new ReportCondition();
         condition.addIn("id", ids);
         joins.forEach(condition::addJoinReport);
         return toPredicate(condition);
     }
 
-    default Specification<T> toPredicate(ReportCondition report) {
+    protected Specification<T> toPredicate(ReportCondition report) {
         return (root, query, criteriaBuilder) -> {
             Predicate predicate = getPredicate(report, root, query, criteriaBuilder);
             Map<Predicate, Boolean> predicates = new HashMap<>();
@@ -59,7 +59,7 @@ public interface SpecificationGenerator<T> {
         };
     }
 
-    private static Predicate applyInnerPredicate(CriteriaBuilder criteriaBuilder, Map<Predicate, Boolean> predicates, Predicate predicate) {
+    protected static Predicate applyInnerPredicate(CriteriaBuilder criteriaBuilder, Map<Predicate, Boolean> predicates, Predicate predicate) {
         List<Predicate> andPredicates = predicates.entrySet().stream().filter(Map.Entry::getValue).map(Map.Entry::getKey).toList();
         List<Predicate> orPredicates = predicates.entrySet().stream().filter((item) -> Boolean.FALSE.equals(item.getValue())).map(Map.Entry::getKey).toList();
         List<Predicate> innerPredicates = new ArrayList<>();
@@ -76,7 +76,7 @@ public interface SpecificationGenerator<T> {
         return predicate != null ? criteriaBuilder.and(predicate, innerPredicate) : innerPredicate;
     }
 
-    private void generateJoinAndInnerPredicate(ReportCondition report, Root<T> root, CriteriaQuery<?> query, CriteriaBuilder criteriaBuilder, Map<Predicate, Boolean> predicates) {
+    protected void generateJoinAndInnerPredicate(ReportCondition report, Root<T> root, CriteriaQuery<?> query, CriteriaBuilder criteriaBuilder, Map<Predicate, Boolean> predicates) {
         if (query.getResultType().isAssignableFrom(Long.class) || report.isDeActiveFetch()) {
             for (JoinReport eachJoin : report.getJoins()) {
                 generateJoin(root, criteriaBuilder, predicates, eachJoin);
@@ -89,7 +89,7 @@ public interface SpecificationGenerator<T> {
         }
     }
 
-    private void generateFetch(Root<T> root, CriteriaBuilder criteriaBuilder, Map<Predicate, Boolean> predicates, JoinReport eachJoin) {
+    protected void generateFetch(Root<T> root, CriteriaBuilder criteriaBuilder, Map<Predicate, Boolean> predicates, JoinReport eachJoin) {
         Fetch fetch = root.fetch(eachJoin.getKey(), eachJoin.getJoinType());
         if (eachJoin.getInnerJoin() != null && !eachJoin.getInnerJoin().isEmpty()) {
             eachJoin.getInnerJoin().forEach(eachInnerFetch -> addInnerFetch(fetch, eachInnerFetch, criteriaBuilder, predicates));
@@ -108,7 +108,7 @@ public interface SpecificationGenerator<T> {
         }
     }
 
-    private void generateJoin(Root<T> root, CriteriaBuilder criteriaBuilder, Map<Predicate, Boolean> predicates, JoinReport eachJoin) {
+    protected void generateJoin(Root<T> root, CriteriaBuilder criteriaBuilder, Map<Predicate, Boolean> predicates, JoinReport eachJoin) {
         Join join = root.join(eachJoin.getKey(), eachJoin.getJoinType());
         if (eachJoin.getInnerJoin() != null && !eachJoin.getInnerJoin().isEmpty()) {
             eachJoin.getInnerJoin().forEach(eachInnerJoin -> addInnerJoin(join, eachInnerJoin, criteriaBuilder, predicates));
@@ -127,7 +127,7 @@ public interface SpecificationGenerator<T> {
         }
     }
 
-    private void addInnerFetch(Fetch fetch, JoinReport joinReport, CriteriaBuilder criteriaBuilder, Map<Predicate, Boolean> predicates) {
+    protected void addInnerFetch(Fetch fetch, JoinReport joinReport, CriteriaBuilder criteriaBuilder, Map<Predicate, Boolean> predicates) {
         Fetch innerFetch = fetch.fetch(joinReport.getKey(), joinReport.getJoinType());
         if (joinReport.getFilter() != null) {
             Predicate predicate = generateInnerPredicateJoin((Join) innerFetch, joinReport.getFilter(), criteriaBuilder, true);
@@ -146,7 +146,7 @@ public interface SpecificationGenerator<T> {
         }
     }
 
-    private void addInnerJoin(Join parent, JoinReport joinReport, CriteriaBuilder criteriaBuilder, Map<Predicate, Boolean> predicates) {
+    protected void addInnerJoin(Join parent, JoinReport joinReport, CriteriaBuilder criteriaBuilder, Map<Predicate, Boolean> predicates) {
         Join innerJoin = parent.join(joinReport.getKey(), joinReport.getJoinType());
         if (joinReport.getFilter() != null) {
             Predicate predicate = generateInnerPredicateJoin(innerJoin, joinReport.getFilter(), criteriaBuilder, true);
@@ -165,7 +165,7 @@ public interface SpecificationGenerator<T> {
         }
     }
 
-    private Predicate getPredicate(ReportCondition report, Root<T> root, CriteriaQuery<?> query, CriteriaBuilder criteriaBuilder) {
+    protected Predicate getPredicate(ReportCondition report, Root<T> root, CriteriaQuery<?> query, CriteriaBuilder criteriaBuilder) {
 
         query.distinct(report.isDistinct());
         Predicate mainPredicate = generatePredicate(report.getFilter(), root, criteriaBuilder, true);
@@ -176,7 +176,7 @@ public interface SpecificationGenerator<T> {
         return mainPredicate;
     }
 
-    private Predicate generatePredicate(ReportFilter filter, Root<T> root, CriteriaBuilder criteriaBuilder, boolean isAnd) {
+    protected Predicate generatePredicate(ReportFilter filter, Root<T> root, CriteriaBuilder criteriaBuilder, boolean isAnd) {
         List<Predicate> predicates = new ArrayList<>();
         for (ConditionParameter eachConditionParameter : filter.getParameters()) {
             if (eachConditionParameter.getValue() != null || List.of(Operator.NULL, Operator.NOT_NULL).contains(eachConditionParameter.getOperator())) {
@@ -197,7 +197,7 @@ public interface SpecificationGenerator<T> {
 
     }
 
-    private Predicate generateInnerPredicateJoin(Join join, ReportFilter filter, CriteriaBuilder criteriaBuilder, boolean and) {
+    protected Predicate generateInnerPredicateJoin(Join join, ReportFilter filter, CriteriaBuilder criteriaBuilder, boolean and) {
         List<Predicate> predicates = new ArrayList<>();
 
         for (ConditionParameter eachParam : filter.getParameters()) {
@@ -214,7 +214,7 @@ public interface SpecificationGenerator<T> {
         return predicates.isEmpty() ? null : criteriaBuilder.or(predicates.toArray(new Predicate[0]));
     }
 
-    private Predicate generatePredicate(Root<T> root, CriteriaBuilder criteriaBuilder, ConditionParameter eachConditionParameter) {
+    protected Predicate generatePredicate(Root<T> root, CriteriaBuilder criteriaBuilder, ConditionParameter eachConditionParameter) {
         String[] key = eachConditionParameter.getKey().split("\\.");
         Path path = root.get(key[0]);
         for (int i = 1; i < key.length; i++) {
@@ -224,7 +224,7 @@ public interface SpecificationGenerator<T> {
         return getCorrespondingPredicate(criteriaBuilder, eachConditionParameter, path);
     }
 
-    private static Predicate getCorrespondingPredicate(CriteriaBuilder criteriaBuilder, ConditionParameter eachConditionParameter, Path path) {
+    protected static Predicate getCorrespondingPredicate(CriteriaBuilder criteriaBuilder, ConditionParameter eachConditionParameter, Path path) {
         Predicate predicate = null;
         switch (eachConditionParameter.getOperator()) {
             case LIKE -> predicate = criteriaBuilder.like(path, "%" + eachConditionParameter.getValue() + "%");

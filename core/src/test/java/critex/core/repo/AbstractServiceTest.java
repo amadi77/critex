@@ -35,20 +35,19 @@ public class AbstractServiceTest {
     }
 
     // Concrete implementation of AbstractService for testing
-    static class TestAbstractService extends AbstractService<TestEntity, TestRepository> implements FilterableSpecificationGenerator<TestEntity> {
+    static class TestAbstractService extends AbstractService<TestEntity, TestRepository> {
 
         public TestAbstractService(TestRepository repository) {
             super(repository);
         }
 
-        @Override
         public ReportCondition generateReport(FilterBase filterBase) {
             return new ReportCondition();
         }
     }
 
     // Mock filter for testing
-    static class TestFilter implements FilterBase {
+    static class TestFilter {
         private String name;
 
         public TestFilter(String name) {

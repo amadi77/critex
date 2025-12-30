@@ -28,6 +28,9 @@ public class SpecificationGeneratorTest {
         Path path = mock(Path.class);
         Predicate predicate = mock(Predicate.class);
 
+        // Create a concrete instance for testing non-static methods if needed,
+        // although getCorrespondingPredicate is static.
+        
         // Mock common CriteriaBuilder methods to avoid NullPointerException
         when(cb.conjunction()).thenReturn(predicate);
         when(cb.disjunction()).thenReturn(predicate);
@@ -60,8 +63,8 @@ public class SpecificationGeneratorTest {
             ConditionParameter param = new ConditionParameter("testField", testValue, operator);
             
             assertDoesNotThrow(() -> {
-                // Call private static method using ReflectionTestUtils
-                ReflectionTestUtils.invokeMethod(SpecificationGenerator.class, "getCorrespondingPredicate", cb, param, path);
+                // Call protected static method directly since it's in the same package
+                SpecificationGenerator.getCorrespondingPredicate(cb, param, path);
             }, "Operator " + operator + " should be implemented in getCorrespondingPredicate");
         }
     }

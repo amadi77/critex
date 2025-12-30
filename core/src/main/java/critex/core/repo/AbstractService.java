@@ -12,18 +12,18 @@ import java.util.*;
  *
  * @author Ahmad Reza Mokhtari
  */
-public abstract class AbstractService<T, R extends JpaSpecificationExecutor<T>> extends Parameterized<T> implements SpecificationGenerator<T> {
+public abstract class AbstractService<T, R extends JpaSpecificationExecutor<T>> extends SpecificationGenerator<T> {
 
     protected R repository;
 
-    public AbstractService(R repository) {
+    protected AbstractService(R repository) {
         this.repository = repository;
     }
 
     /**
      * Get the repository instance
      */
-    public R getRepository() {
+    protected R getRepository() {
         return repository;
     }
 
@@ -32,21 +32,21 @@ public abstract class AbstractService<T, R extends JpaSpecificationExecutor<T>> 
     /**
      * Find all entities with filter and pagination
      */
-    public List<T> findAll(ReportCondition condition, PageRequestParam pageRequest) {
+    protected List<T> findAll(ReportCondition condition, PageRequestParam pageRequest) {
         return getRepository().findAll(toPredicate(condition), PaginationUtils.getPageRequest(pageRequest)).toList();
     }
 
     /**
      * Find all dto with filter
      */
-    public <DTO> List<DTO> findAllDto(ReportCondition condition, Class<DTO> clazz) {
+    protected <DTO> List<DTO> findAllDto(ReportCondition condition, Class<DTO> clazz) {
         return getRepository().findBy(toPredicate(condition), q -> q.as(clazz).all());
     }
 
     /**
      * Find all ids with filter
      */
-    public List<Object> findAllId(ReportCondition condition) {
+    protected List<Object> findAllId(ReportCondition condition) {
         condition.setDeActiveFetch(true);
         return getRepository().findBy(toPredicate(condition), q -> q.as(IdDto.class).all()).stream().map(IdDto::id).toList();
     }
@@ -54,7 +54,7 @@ public abstract class AbstractService<T, R extends JpaSpecificationExecutor<T>> 
     /**
      * Find all entities with filter, pagination and joins
      */
-    public List<T> findAll(ReportCondition condition, PageRequestParam pageRequest, Collection<String> joins) {
+    protected List<T> findAll(ReportCondition condition, PageRequestParam pageRequest, Collection<String> joins) {
         if (joins != null) {
             joins.forEach(condition::addJoinReport);
         }
@@ -66,7 +66,7 @@ public abstract class AbstractService<T, R extends JpaSpecificationExecutor<T>> 
     /**
      * Find all entities as page with filter, pagination and joins
      */
-    public Page<T> findAllPage(ReportCondition condition, PageRequestParam pageRequest, Collection<String> joins) {
+    protected Page<T> findAllPage(ReportCondition condition, PageRequestParam pageRequest, Collection<String> joins) {
         if (joins != null) {
             joins.forEach(condition::addJoinReport);
         }
@@ -76,7 +76,7 @@ public abstract class AbstractService<T, R extends JpaSpecificationExecutor<T>> 
     /**
      * Find all entities as page with condition and pagination
      */
-    public Page<T> findAllPage(ReportCondition condition, PageRequestParam pageRequest) {
+    protected Page<T> findAllPage(ReportCondition condition, PageRequestParam pageRequest) {
         return getRepository().findAll(toPredicate(condition), PaginationUtils.getPageRequest(pageRequest));
     }
 
@@ -85,13 +85,13 @@ public abstract class AbstractService<T, R extends JpaSpecificationExecutor<T>> 
     /**
      * Count entities with filter
      */
-    public long count(ReportCondition condition) {
+    protected long count(ReportCondition condition) {
         return getRepository().count(toPredicate(condition));
     }
 
     // ============= SINGLE RESULT METHODS WITH FILTER =============
 
-    private Optional<T> findFirst(ReportCondition condition) {
+    protected Optional<T> findFirst(ReportCondition condition) {
         PageRequestParam pageRequest = PageRequestParam.builder()
                 .pageNumber(0)
                 .pageSize(1)
@@ -105,7 +105,7 @@ public abstract class AbstractService<T, R extends JpaSpecificationExecutor<T>> 
     /**
      * Search entities with text in multiple fields
      */
-    public List<T> search(String searchText, List<String> searchFields, PageRequestParam pageRequest) {
+    protected List<T> search(String searchText, List<String> searchFields, PageRequestParam pageRequest) {
         ReportCondition condition = new ReportCondition();
         ReportFilter orFilter = new ReportFilter();
 
@@ -120,7 +120,7 @@ public abstract class AbstractService<T, R extends JpaSpecificationExecutor<T>> 
     /**
      * Search entities with text in multiple fields and return as page
      */
-    public Page<T> searchPage(String searchText, List<String> searchFields, PageRequestParam pageRequest) {
+    protected Page<T> searchPage(String searchText, List<String> searchFields, PageRequestParam pageRequest) {
         ReportCondition condition = new ReportCondition();
         ReportFilter orFilter = new ReportFilter();
 
@@ -135,7 +135,7 @@ public abstract class AbstractService<T, R extends JpaSpecificationExecutor<T>> 
     /**
      * Find entity by ID with joins
      */
-    public T getEntityById(Object id, Collection<String> joins) {
+    protected T getEntityById(Object id, Collection<String> joins) {
         if (id == null) {
             return null;
         }
@@ -147,7 +147,7 @@ public abstract class AbstractService<T, R extends JpaSpecificationExecutor<T>> 
     /**
      * Find entity by ID with inner joins
      */
-    public T getEntityByIdInnerJoin(Object id, Collection<JoinReport> joins) {
+    protected T getEntityByIdInnerJoin(Object id, Collection<JoinReport> joins) {
         if (id == null) {
             return null;
         }
@@ -158,7 +158,7 @@ public abstract class AbstractService<T, R extends JpaSpecificationExecutor<T>> 
     /**
      * Find optional entity by ID with joins
      */
-    public Optional<T> getEntityOptionalById(Object id, Collection<String> joins) {
+    protected Optional<T> getEntityOptionalById(Object id, Collection<String> joins) {
         T entity = getEntityById(id, joins);
         return Optional.ofNullable(entity);
     }
@@ -166,7 +166,7 @@ public abstract class AbstractService<T, R extends JpaSpecificationExecutor<T>> 
     /**
      * Find entities by equal conditions
      */
-    public List<T> getListByEqualConditions(Map<String, Object> conditions, Collection<String> joins) {
+    protected List<T> getListByEqualConditions(Map<String, Object> conditions, Collection<String> joins) {
         List<JoinReport> joinReports = joins != null ? joins.stream().map(JoinReport::of).toList() : new ArrayList<>();
         ReportCondition reportCondition = new ReportCondition();
         conditions.forEach(reportCondition::addEqual);
@@ -177,7 +177,7 @@ public abstract class AbstractService<T, R extends JpaSpecificationExecutor<T>> 
     /**
      * Find entities by equal conditions with inner joins
      */
-    public List<T> getListByEqualConditionsInnerJoin(Map<String, Object> conditions, Collection<JoinReport> joins) {
+    protected List<T> getListByEqualConditionsInnerJoin(Map<String, Object> conditions, Collection<JoinReport> joins) {
         ReportCondition reportCondition = new ReportCondition();
         conditions.forEach(reportCondition::addEqual);
         if (joins != null) {
@@ -189,7 +189,7 @@ public abstract class AbstractService<T, R extends JpaSpecificationExecutor<T>> 
     /**
      * Find entities by conditions with inner joins
      */
-    public List<T> getListByConditionsInnerJoin(ReportCondition mainCondition, Collection<JoinReport> joins) {
+    protected List<T> getListByConditionsInnerJoin(ReportCondition mainCondition, Collection<JoinReport> joins) {
         if (joins != null) {
             joins.forEach(mainCondition::addJoinReport);
         }
@@ -199,7 +199,7 @@ public abstract class AbstractService<T, R extends JpaSpecificationExecutor<T>> 
     /**
      * Find single entity by equal conditions with inner joins
      */
-    public T getByEqualConditionsInnerJoin(Map<String, Object> conditions, Collection<JoinReport> joins) {
+    protected T getByEqualConditionsInnerJoin(Map<String, Object> conditions, Collection<JoinReport> joins) {
         List<T> result = getListByEqualConditionsInnerJoin(conditions, joins);
         return result.isEmpty() ? null : result.get(0);
     }
@@ -207,7 +207,7 @@ public abstract class AbstractService<T, R extends JpaSpecificationExecutor<T>> 
     /**
      * Find single entity by conditions with inner joins
      */
-    public T getByConditionsInnerJoin(ReportCondition mainCondition, Collection<JoinReport> joins) {
+    protected T getByConditionsInnerJoin(ReportCondition mainCondition, Collection<JoinReport> joins) {
         List<T> result = getListByConditionsInnerJoin(mainCondition, joins);
         return result.isEmpty() ? null : result.get(0);
     }
@@ -216,14 +216,14 @@ public abstract class AbstractService<T, R extends JpaSpecificationExecutor<T>> 
     /**
      * Check if entity exists by condition
      */
-    public boolean exists(ReportCondition condition) {
+    protected boolean exists(ReportCondition condition) {
         return repository.count(toPredicate(condition)) > 0;
     }
 
     /**
      * Check if entity exists by equal conditions
      */
-    public boolean exists(Map<String, Object> equalConditions) {
+    protected boolean exists(Map<String, Object> equalConditions) {
         ReportCondition condition = new ReportCondition();
         equalConditions.forEach(condition::addEqual);
         return exists(condition);
@@ -232,14 +232,14 @@ public abstract class AbstractService<T, R extends JpaSpecificationExecutor<T>> 
     /**
      * Find entities by IDs
      */
-    public List<T> findAllByIds(List<Object> ids) {
+    protected List<T> findAllByIds(List<Object> ids) {
         return repository.findAll(getAllByIds(ids, new ArrayList<>()));
     }
 
     /**
      * Find entities by IDs with joins
      */
-    public List<T> findAllByIds(List<Object> ids, Collection<String> joins) {
+    protected List<T> findAllByIds(List<Object> ids, Collection<String> joins) {
         List<JoinReport> joinReports = joins != null ? joins.stream().map(JoinReport::of).toList() : new ArrayList<>();
         return repository.findAll(getAllByIds(ids, joinReports));
     }
@@ -247,28 +247,28 @@ public abstract class AbstractService<T, R extends JpaSpecificationExecutor<T>> 
     /**
      * Create new condition
      */
-    public ReportCondition newCondition() {
+    protected ReportCondition newCondition() {
         return new ReportCondition();
     }
 
     /**
      * Create new filter
      */
-    public ReportFilter newFilter() {
+    protected ReportFilter newFilter() {
         return new ReportFilter();
     }
 
     /**
      * Create join report
      */
-    public JoinReport join(String path) {
+    protected JoinReport join(String path) {
         return JoinReport.of(path);
     }
 
     /**
      * Create multiple join reports
      */
-    public List<JoinReport> joins(String... paths) {
+    protected List<JoinReport> joins(String... paths) {
         List<JoinReport> joinReports = new ArrayList<>();
         for (String path : paths) {
             joinReports.add(join(path));
@@ -276,5 +276,5 @@ public abstract class AbstractService<T, R extends JpaSpecificationExecutor<T>> 
         return joinReports;
     }
 
-    private record IdDto(Object id){}
+    protected record IdDto(Object id){}
 }
