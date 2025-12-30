@@ -26,7 +26,7 @@ public class CommentResponse {
         this.content = comment.getContent();
         this.postId = comment.getPostId();
         this.userId = comment.getUserId();
-        if (Hibernate.isInitialized(comment.getUser())) {
+        if (comment.getUser() != null && Hibernate.isInitialized(comment.getUser())) {
             this.user = new UserResponse(comment.getUser());
         }
         if (comment.getReplies() != null && Hibernate.isInitialized(comment.getReplies())) {
